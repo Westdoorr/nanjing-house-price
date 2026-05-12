@@ -1,5 +1,21 @@
 {
   "date": "2026-05-11",
+  "summary": {
+    "newHouseTodaySets": {
+      "subscribe": 0,
+      "deal": 0,
+      "source": "https://www.njhouse.com.cn/projectindex.html"
+    },
+    "newHouseMarketTable": {
+      "全市入网项目": "2327个",
+      "全市入网面积": "24581.24万m²"
+    },
+    "secondHandOfficial": {
+      "yesterdayResidentialVolume": 495,
+      "totalListing": 128286,
+      "source": "https://njzl.njhouse.com.cn/stock"
+    }
+  },
   "secondHand": [
     {
       "title": "示例：鼓楼区某小区 89㎡",
@@ -14,5 +30,5 @@
       "link": "https://example.com/new/1"
     }
   ],
-  "note": "复制本文件为 nanjing-daily.json 并替换为真实数据；或由你的采集脚本生成。"
+  "note": "运行 npm run daily:fetch 可从南京网上房地产抓取最新数据并覆盖 nanjing-daily.json；也可手工编辑本文件。"
 }

@@ -69,6 +69,46 @@ function formatList(items, emptyText) {
     .join("\n");
 }
 
+function formatSummary(summary) {
+  if (!summary || typeof summary !== "object") return "";
+
+  const lines = [];
+  const n = summary.newHouseTodaySets;
+  if (n && (n.subscribe != null || n.deal != null)) {
+    const sub = n.subscribe != null ? `${n.subscribe} 套` : "—";
+    const deal = n.deal != null ? `${n.deal} 套` : "—";
+    lines.push(`- **今日商品房（官方）**：认购 ${sub}，成交 ${deal}`);
+    if (n.source) lines.push(`  - 来源：[南京网上房地产·商品房](${n.source})`);
+  }
+
+  const t = summary.newHouseMarketTable;
+  if (t && typeof t === "object" && Object.keys(t).length) {
+    const picks = ["全市入网项目", "全市入网面积", "本年上市", "本年成交", "本月上市", "本月成交"];
+    const parts = picks
+      .filter((k) => t[k])
+      .map((k) => `${k} ${escMd(t[k])}`);
+    if (parts.length) {
+      lines.push(`- **新房市场概览**：${parts.join("；")}`);
+    }
+  }
+
+  const s = summary.secondHandOfficial;
+  if (s && typeof s === "object") {
+    const bits = [];
+    if (s.yesterdayResidentialVolume != null) {
+      bits.push(`昨日住宅成交量 ${s.yesterdayResidentialVolume} 套`);
+    }
+    if (s.totalListing != null) bits.push(`总挂牌 ${s.totalListing} 套`);
+    if (bits.length) {
+      lines.push(`- **存量房（官方汇总）**：${bits.join("；")}`);
+      if (s.source) lines.push(`  - 来源：[存量房列表](${s.source})`);
+    }
+  }
+
+  if (!lines.length) return "";
+  return `#### 数据摘要\n${lines.join("\n")}\n\n`;
+}
+
 function buildMarkdown({ reportPath, data, error }) {
   const date = data?.date || todayShanghai();
   const header = `### 南京房产成交日报（${date}）\n`;
@@ -85,11 +125,12 @@ function buildMarkdown({ reportPath, data, error }) {
     return (
       header +
       `> 未找到日报数据文件。\n` +
-      `> 请将采集结果写入：<${escMd(reportPath)}>\n` +
+      `> 请先运行 \`npm run daily:fetch\` 或写入：<${escMd(reportPath)}>\n` +
       `> 可参考仓库内 \`data/nanjing-daily.example.json\` 格式。\n`
     );
   }
 
+  const summaryBlock = formatSummary(data.summary);
   const note = data.note ? `\n**备注**：${escMd(data.note)}\n` : "";
   const second = formatList(
     data.secondHand,
@@ -102,6 +143,7 @@ function buildMarkdown({ reportPath, data, error }) {
 
   return (
     header +
+    summaryBlock +
     `#### 二手房\n${second}\n\n` +
     `#### 新房\n${neu}\n` +
     note +

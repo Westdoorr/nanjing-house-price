@@ -24,6 +24,9 @@ jobs:
         with:
           node-version: "20"
 
+      - name: Fetch Nanjing official daily stats
+        run: node scripts/fetch-nanjing-daily.mjs
+
       - name: Daily push to WeCom
         env:
           WECHAT_WORK_WEBHOOK: ${{ secrets.WECHAT_WORK_WEBHOOK }}
