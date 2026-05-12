@@ -1,0 +1,11 @@
+{
+  "name": "nanjing-house-price",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "daily:push": "node scripts/daily-push.mjs"
+  }
+}

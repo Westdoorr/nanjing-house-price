@@ -1,0 +1,30 @@
+# 北京时间每天 20:00 推送（GitHub Actions cron 为 UTC：12:00 = 20:00 CST）
+# 需在仓库 Settings → Secrets → Actions 添加 WECHAT_WORK_WEBHOOK
+
+name: daily-wecom-push
+
+on:
+  schedule:
+    - cron: "0 12 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  push:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Daily push to WeCom
+        env:
+          WECHAT_WORK_WEBHOOK: ${{ secrets.WECHAT_WORK_WEBHOOK }}
+        run: node scripts/daily-push.mjs

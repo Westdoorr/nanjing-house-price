@@ -1,0 +1,18 @@
+{
+  "date": "2026-05-11",
+  "secondHand": [
+    {
+      "title": "示例：鼓楼区某小区 89㎡",
+      "price": "320万",
+      "link": "https://example.com/listing/1"
+    }
+  ],
+  "newHouse": [
+    {
+      "title": "示例：河西南某盘 建面 110㎡",
+      "price": "约 450万",
+      "link": "https://example.com/new/1"
+    }
+  ],
+  "note": "复制本文件为 nanjing-daily.json 并替换为真实数据；或由你的采集脚本生成。"
+}

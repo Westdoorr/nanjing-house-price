@@ -1,0 +1,5 @@
+node_modules/
+.env
+.DS_Store
+# 本地日报数据（含成交明细时可不提交仓库）
+data/nanjing-daily.json
