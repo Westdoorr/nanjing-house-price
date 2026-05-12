@@ -2,15 +2,22 @@
 /**
  * 读取日报 JSON → 组装 Markdown → 企业微信群机器人推送
  * 环境变量：WECHAT_WORK_WEBHOOK（必填）
+ * - 可在终端先 export；或写在项目根目录 .env（勿提交 git），本脚本会自动加载。
  * 可选：DAILY_REPORT_PATH（默认项目根目录 data/nanjing-daily.json）
  */
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { loadDotenv } from "./load-dotenv.mjs";
 import { sendWecomMarkdown } from "./wecom-robot.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.join(__dirname, "..");
+loadDotenv(root);
+// 若从上级目录执行 node/npm，cwd 可能与 package 根不一致，再尝试 cwd 下的 .env
+if (path.resolve(process.cwd()) !== path.resolve(root)) {
+  loadDotenv(process.cwd());
+}
 
 function todayShanghai() {
   const fmt = new Intl.DateTimeFormat("en-CA", {
@@ -156,7 +163,27 @@ function buildMarkdown({ reportPath, data, error }) {
 async function main() {
   const webhook = process.env.WECHAT_WORK_WEBHOOK;
   if (!webhook?.trim()) {
-    console.error("请设置环境变量 WECHAT_WORK_WEBHOOK");
+    const envPaths = [
+      path.join(root, ".env"),
+      path.join(root, ".env.local"),
+    ];
+    if (path.resolve(process.cwd()) !== path.resolve(root)) {
+      envPaths.push(path.join(process.cwd(), ".env"));
+      envPaths.push(path.join(process.cwd(), ".env.local"));
+    }
+    const exists = envPaths.filter((p) => fs.existsSync(p));
+    console.error(
+      "请设置环境变量 WECHAT_WORK_WEBHOOK（注意大小写与拼写）。\n" +
+        "任选其一：\n" +
+        "  1) 终端执行：export WECHAT_WORK_WEBHOOK='https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=...'\n" +
+        "  2) 在以下路径之一创建 .env，单独一行（不要改变量名）：WECHAT_WORK_WEBHOOK=你的完整地址\n" +
+        envPaths.map((p) => `     - ${p}`).join("\n") +
+        "\n" +
+        (exists.length
+          ? `已检测到 .env 文件：${exists.join("；")} —— 若仍失败，请打开检查：是否有 BOM、是否写成 export WECHAT_WORK_WEBHOOK=、等号两侧是否有多余空格、值是否被截断。\n`
+          : "当前未检测到上述路径中的 .env / .env.local 文件。\n") +
+        "说明：若系统里存在「同名但值为空」的环境变量，会阻止读取 .env；已改为空值时也会用 .env 覆盖。"
+    );
     process.exit(1);
   }
 
