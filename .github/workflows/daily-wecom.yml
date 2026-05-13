@@ -1,11 +1,22 @@
-# 北京时间每天 20:00 推送（GitHub Actions cron 为 UTC：12:00 = 20:00 CST）
-# 需在仓库 Settings → Secrets → Actions 添加 WECHAT_WORK_WEBHOOK
+# 北京时间每天 20:00 推送（使用 IANA 时区，避免仅按 UTC 换算产生偏差）
+# cron 在 timezone 所指时区下解读：下方为「上海 每天 20:00」
+#
+# 云端定时与本地 npm 无关：必须在 GitHub 仓库配置 Actions Secret「WECHAT_WORK_WEBHOOK」。
+# 常见未推送原因：
+# 1) 代码/workflow 未推送到 GitHub，或 workflow 不在「默认分支」上（定时只跑默认分支）
+# 2) 仓库是 fork：默认关闭定时，需在 Actions 里为 fork 启用 scheduled workflows
+# 3) 仓库长期无提交：GitHub 可能暂停无活动的定时任务（再推送一次可恢复）
+# 4) 未在 Settings → Secrets and variables → Actions 添加 WECHAT_WORK_WEBHOOK（与本地 .env 是两回事）
+# 5) 在 Actions 总开关里关闭了 Actions
+#
+# 自检：打开仓库 Actions → daily-wecom-push → 看是否有 nightly 记录；可点「Run workflow」手动跑一次。
 
 name: daily-wecom-push
 
 on:
   schedule:
-    - cron: "0 12 * * *"
+    - cron: "0 20 * * *"
+      timezone: "Asia/Shanghai"
   workflow_dispatch:
 
 permissions:
@@ -16,6 +27,15 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
+      - name: Ensure WECHAT_WORK_WEBHOOK Actions secret exists
+        env:
+          HOOK: ${{ secrets.WECHAT_WORK_WEBHOOK }}
+        run: |
+          if [ -z "$HOOK" ]; then
+            echo "::error::未配置 Actions Secret：WECHAT_WORK_WEBHOOK。请到 Settings → Secrets and variables → Actions 添加（与本地 .env 无关）。"
+            exit 1
+          fi
+
       - name: Checkout
         uses: actions/checkout@v4
 
