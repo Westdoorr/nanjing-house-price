@@ -6,8 +6,15 @@
     "node": ">=16"
   },
   "scripts": {
+    "playwright:install": "playwright install chromium",
+    "beike:login": "node scripts/beike-playwright-login.mjs",
+    "daily:fetch:ershou:local": "node scripts/fetch-ershou-playwright.mjs",
+    "daily:fetch:ershou:http": "node scripts/fetch-ershou-local.mjs",
     "daily:fetch": "node scripts/fetch-nanjing-daily.mjs",
     "daily:push": "node scripts/daily-push.mjs",
-    "daily:run": "node scripts/fetch-nanjing-daily.mjs && node scripts/daily-push.mjs"
+    "daily:run": "node scripts/fetch-ershou-playwright.mjs; node scripts/fetch-nanjing-daily.mjs && node scripts/daily-push.mjs"
+  },
+  "dependencies": {
+    "playwright": "1.39.0"
   }
 }

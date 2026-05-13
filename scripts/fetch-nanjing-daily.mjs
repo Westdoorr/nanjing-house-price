@@ -15,6 +15,7 @@ import { fileURLToPath, URL } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.join(__dirname, "..");
+const LOCAL_ERSHOU_PATH = path.join(root, "data", "ershou-local.json");
 
 const UA =
   "Mozilla/5.0 (compatible; nanjing-house-price/1.0; +https://github.com/)";
@@ -22,6 +23,7 @@ const UA =
 const URL_NEW =
   "https://www.njhouse.com.cn/projectindex.html";
 const URL_STOCK = "http://njzl.njhouse.com.cn/stock";
+const DEFAULT_FOCUS_DISTRICTS = ["玄武区", "秦淮区", "建邺区", "鼓楼区", "雨花台区"];
 
 function todayShanghai() {
   return new Intl.DateTimeFormat("en-CA", {
@@ -129,6 +131,21 @@ function parseNewHouse(html) {
   return { subscribeSets, dealSets, table, rank };
 }
 
+function parseFocusDistricts() {
+  const raw = process.env.FOCUS_DISTRICTS?.trim();
+  if (!raw) return DEFAULT_FOCUS_DISTRICTS;
+  const list = raw
+    .split(/[,\s，]+/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+  return list.length ? list : DEFAULT_FOCUS_DISTRICTS;
+}
+
+function extractDistrictFromTitle(title) {
+  const m = String(title).match(/^\[([^\]]+)\]/);
+  return m ? m[1].trim() : "";
+}
+
 function parseStock(html) {
   const pick = (label) => {
     const re = new RegExp(`${label}[:：]\\s*(\\d+)`, "i");
@@ -144,9 +161,27 @@ function parseStock(html) {
   };
 }
 
+function loadLocalSecondHand() {
+  if (!fs.existsSync(LOCAL_ERSHOU_PATH)) {
+    return { list: [], warning: "" };
+  }
+  try {
+    const raw = fs.readFileSync(LOCAL_ERSHOU_PATH, "utf8");
+    const data = JSON.parse(raw);
+    const list = Array.isArray(data.secondHand) ? data.secondHand : [];
+    const warning = String(data.warning || "");
+    return { list, warning };
+  } catch (e) {
+    return { list: [], warning: `读取本地二手数据失败：${String(e.message || e)}` };
+  }
+}
+
 function buildReport(newParsed, stockParsed, stockWarn) {
   const date = todayShanghai();
-  const newHouse = newParsed.rank;
+  const focusDistricts = parseFocusDistricts();
+  const newHouse = newParsed.rank.filter((item) =>
+    focusDistricts.includes(extractDistrictFromTitle(item.title))
+  );
 
   const secondHand = [];
   if (stockParsed.yesterdayResidentialVolume != null) {
@@ -163,13 +198,21 @@ function buildReport(newParsed, stockParsed, stockWarn) {
       link: URL_STOCK,
     });
   }
+  const localSecond = loadLocalSecondHand();
+  if (localSecond.list.length) {
+    secondHand.push(...localSecond.list);
+  }
 
   const noteParts = [];
   if (stockWarn) {
     noteParts.push(`存量房页面抓取失败（已尝试 HTTP/HTTPS）：${stockWarn}。`);
   }
+  if (localSecond.warning) {
+    noteParts.push(`贝壳本地采集提示：${localSecond.warning}`);
+  }
   noteParts.push(
     "数据来源：南京市网上房地产公开页面（新房）与存量房列表页（汇总）。",
+    `推送范围：仅保留关注区域（${focusDistricts.join("、")}）。`,
     "新房「今日销售排行」口径为销售套数（销售=认购+成交），非单套成交价；单价需进入具体楼盘/许可页面查看。",
     "二手房公开列表页不提供「当日逐套成交价」；页面展示为「昨日住宅成交量」等汇总指标。若需成交明细与价格，需另行对接合规数据服务或手工维护。"
   );

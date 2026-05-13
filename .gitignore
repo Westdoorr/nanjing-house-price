@@ -3,3 +3,9 @@ node_modules/
 .DS_Store
 # 本地日报数据（含成交明细时可不提交仓库）
 data/nanjing-daily.json
+data/ershou-local.json
+# Playwright 登录态（等同账号凭证，勿提交）
+data/beike-storage.json
+# 持久化 Chromium 配置目录（勿提交）
+data/beike-chromium-profile/
+data/beike-captcha.png
